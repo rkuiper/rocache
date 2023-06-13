@@ -1,0 +1,32 @@
+Package: rocache
+Title: Reproducible Caching for R Results
+Version: 0.90.0
+Authors@R: 
+    person("Rowan","Kuiper",email="r.kuiper.emc@gmail.com",role=c("cre","aut"),
+    comment = c(ORCID = "0000-0002-3703-1762"))
+Description: 
+    The 'rocache' package offers a powerful caching mechanism that ensures the 
+    reproducibility of R results. It provides control to the user, allowing them
+    to avoid rerunning time-consuming code by checking for changes in input/output.
+    Key Features:
+    - Effortless Reproducibility: 'rocache' enables easy tracking and 
+        verification of code outputs by caching and comparing results, ensuring 
+        consistent and reproducible analyses.
+    - Time-saving Efficiency: By storing and retrieving computed results, 'rocache' 
+        significantly reduces execution time by avoiding redundant computations.
+    - Customizable Control: The caching mechanism in 'rocache' puts you in charge, 
+        allowing you to specify the caching behavior and expiration policies that 
+        best suit your workflow.
+    - Seamless Integration: 'rocache' integrates smoothly with your existing code 
+        and workflows, minimizing any additional effort required to implement caching.
+    Whether you are working with computationally intensive tasks, complex 
+    simulations, or large datasets, 'rocache' empowers you to optimize your 
+    code and streamline your analyses by intelligently managing cached results.
+Note: 'rocache' goes beyond basic caching; it provides a robust framework for 
+    reproducibility, making it an invaluable tool for researchers, data scientists, 
+    and anyone seeking to enhance their R workflows.
+Imports: methods, digest
+Encoding: UTF-8
+License: GPL-3
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
