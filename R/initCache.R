@@ -9,11 +9,12 @@
 #'
 #' @param dFile path to dFile. Will be created if not existing. 
 #' @param cFolder path to cFolder. Will be created if not existing. 
-#' @param syncAllowed TRUE/FALSE. IF cFolder is out of sync, sync it, or only warn. 
+#' @param overwrite Overwrite cache upon change (default: FALSE)
+#' @param syncAllowed Allow synchronization of cFolder (defult: FALSE).
 #'
 #' @inherit storeCache return examples seealso
 #' @export
-initCache<-function( dFile = "./dFile.rds", cFolder = "./cache", syncAllowed = FALSE) {
+initCache<-function( dFile = "./dFile.rds", cFolder = "./cache", overwrite = FALSE, syncAllowed = FALSE) {
 	
 	##Save initial state:
 
@@ -56,7 +57,7 @@ initCache<-function( dFile = "./dFile.rds", cFolder = "./cache", syncAllowed = F
 				startAt<-startAt+1
 				#Init the handerClass of (version +1), to trigger version increment.
 				for (idx in seq(startAt, length(versionPath) )){
-					cacheHandler<- new( .getHandlerClasses(versionPath[idx]), dFile = dFile, cFolder = cFolder, syncAllowed = syncAllowed )
+					cacheHandler<- new( .getHandlerClasses(versionPath[idx]), dFile = dFile, cFolder = cFolder, overwrite = overwrite )
 				}
 				
 				##Get actual dFile version	after increment
@@ -68,14 +69,14 @@ initCache<-function( dFile = "./dFile.rds", cFolder = "./cache", syncAllowed = F
 			}
 		}
 
-		cacheHandler<- new( .getHandlerClasses(latestKnown_dFileVersion), dFile = dFile, cFolder = cFolder, syncAllowed = syncAllowed )
+		cacheHandler<- new( .getHandlerClasses(latestKnown_dFileVersion), dFile = dFile, cFolder = cFolder, overwrite = overwrite )
 
 				
 		##Make sure that there are no cFolder cache files without dFile entry
-	 	syncMsgs <- synchronizeCache( cacheHandler, what = "cFolder") 
+	 	syncMsgs <- synchronizeCache( cacheHandler, what = "cFolder", dryRun = I(syncAllowed==FALSE) ) 
 		if ( length(syncMsgs) > 0 ) { ##If there is something tobe(if dryRun) / was (if sync allowed) synchronized
-			if (get_syncAllowed(cacheHandler) == TRUE) { dFileModified = TRUE; message(syncMsgs); }
-			if (get_syncAllowed(cacheHandler) == FALSE) {
+			if ( syncAllowed == TRUE) { dFileModified = TRUE; message(syncMsgs); }
+			if ( syncAllowed == FALSE) {
 				stop(simpleError(paste0(c(syncMsgs,"\n", "Please make sure that the provided dFile and cFolder are the correct ones. If so, then consider setting syncAllowed = TRUE, which will remove the files in cFolder that have no associated entry in dFile."),collapse="")))
 			}
 		}

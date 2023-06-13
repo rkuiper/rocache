@@ -9,9 +9,9 @@ setValidity("roCache_0.89.0",
 		if (options("cache.debug")[[1]]==TRUE) 	print("Start validation 0.89.0")
 		errs<-vector()
 		expectedVersion = gsub("^roCache_([0-9\\.]+)$","\\1", class(object))
-		if (!all(get_version(object) == expectedVersion)) errs<-c(errs,paste("Incorrectly set 'version': ",object@version)) #By definition 
-		if (!all(get_prevVersion(object) == c("0.0.0"))) errs<-c(errs,"Incorrectly set 'previousVersion'") #By definition 
-		if (!all(get_RDSversion(object) == c(3L)))    errs<-c(errs,"Incorrectly set 'RDSversion'") #By definition 
+		if (!all(version(object) == expectedVersion)) errs<-c(errs,paste("Incorrectly set 'version': ",object@version)) #By definition 
+		if (!all(prevVersion(object) == c("0.0.0"))) errs<-c(errs,"Incorrectly set 'previousVersion'") #By definition 
+		if (!all(rdsVersion(object) == c(3L)))    errs<-c(errs,"Incorrectly set 'rdsVersion'") #By definition 
 
 		if (options("cache.debug")[[1]]==TRUE) 	print("End validation 0.89.0")		
 		
@@ -22,16 +22,16 @@ setValidity("roCache_0.89.0",
 
 #Define the initialize method for the class
 #' @import methods
-setMethod("initialize", "roCache_0.89.0", function( .Object,  dFile, cFolder, syncAllowed = FALSE ) {
+setMethod("initialize", "roCache_0.89.0", function( .Object,  dFile, cFolder, overwrite = FALSE ) {
 	if (options("cache.debug")[[1]]==TRUE) 	print("Start init 0.89.0")
 	
 	.Object<-do.call("callNextMethod",	args=c( ##Call parent class
 		.Object     = .Object, 
 		dFile       = dFile,
 		cFolder     = cFolder,
-		syncAllowed = syncAllowed,
+		overwrite   = overwrite,
 		version     = "0.89.0",  
-		RDSversion  = 3L, 
+		rdsVersion  = 3L, 
 		previousVersion = "0.0.0")) ##Place holder version (non existent)
 
 	dFile_existsAsFolder   = dir.exists(dFile)
@@ -61,9 +61,9 @@ setMethod("initialize", "roCache_0.89.0", function( .Object,  dFile, cFolder, sy
 setMethod(".createEmpty_dFile", "roCache_0.89.0", function(cacheHandle, ...) {
 	if (options("cache.debug")[[1]]==TRUE) 	print("Start .createEmpty_dFile")
 
-	dFile      = get_dFile(cacheHandle)
-	version    = get_version(cacheHandle)
-	RDSversion = get_RDSversion(cacheHandle)
+	dFile      = dFile(cacheHandle)
+	version    = version(cacheHandle)
+	rdsVersion = rdsVersion(cacheHandle)
 
 	dFileExists   <- file.exists( dFile  ) 
 	dFileIsFolder <- dir.exists(  dFile  )
@@ -81,7 +81,7 @@ setMethod(".createEmpty_dFile", "roCache_0.89.0", function(cacheHandle, ...) {
   	file     = dFile, 
   	ascii    = TRUE, 
   	compress = FALSE, 
-  	version  = RDSversion)
+  	version  = rdsVersion)
 	if (options("cache.debug")[[1]]==TRUE) 	print("End .createEmpty_dFile")
 
 	return(TRUE)
@@ -95,7 +95,7 @@ setMethod(".createEmpty_dFile", "roCache_0.89.0", function(cacheHandle, ...) {
 setMethod(".createEmpty_cFolder", "roCache_0.89.0", function(cacheHandle, ...) {
 	if (options("cache.debug")[[1]]==TRUE) 	print("Start .createEmpty_cFolder")
 
-	cFolder = get_cFolder(cacheHandle) 
+	cFolder = cFolder(cacheHandle) 
 	cFolderExists   <- dir.exists( cFolder ) 
 	if (cFolderExists)   stop(simpleError(message("cFolder already exists")))
 	dir.create( cFolder,	showWarnings=TRUE, recursive=TRUE )
@@ -111,7 +111,7 @@ setMethod(".createEmpty_cFolder", "roCache_0.89.0", function(cacheHandle, ...) {
 setMethod(".incrementVersion",  "roCache_0.89.0",
 	function(	cacheHandle, ... ) {
 		#No previous versions exists!
-		stop(simpleError(paste0(".incrementVersion of cacheHandle ", get_version(cacheHandle),". However, no earlier versions exist!")))
+		stop(simpleError(paste0(".incrementVersion of cacheHandle ", version(cacheHandle),". However, no earlier versions exist!")))
 	}
 )
 
@@ -131,8 +131,8 @@ setMethod( "readCache", "roCache_0.89.0",
  	
 	returnType<-match.arg(returnType, c("contents", "outputDigest", "inputDigests", "filename") )
 
-	dFile       = get_dFile(cacheHandle)
-	cFolder     = get_cFolder(cacheHandle)
+	dFile       = dFile(cacheHandle)
+	cFolder     = cFolder(cacheHandle)
 	
 	if (length(id) !=1 ) stop(simpleError("Please provide a single value to argument 'id'."))
 
@@ -223,7 +223,7 @@ setMethod( "readCache", "roCache_0.89.0",
 #' @export
 setMethod( "listCache", "roCache_0.89.0", 
 	function( cacheHandle, ... ) {
-		dFile = get_dFile(cacheHandle)
+		dFile = dFile(cacheHandle)
 		return( names(readRDS(dFile)[["FILEIDS"]]) )
 })
 
@@ -243,9 +243,9 @@ setMethod( "removeCache", "roCache_0.89.0",
 	dotList<-list(...)
 
 
-	dFile               = get_dFile(cacheHandle)
-	cFolder             = get_cFolder(cacheHandle)
-	RDSversion          = get_RDSversion(cacheHandle)
+	dFile               = dFile(cacheHandle)
+	cFolder             = cFolder(cacheHandle)
+	rdsVersion          = rdsVersion(cacheHandle)
 	dFileEntryMustExist <- if (is.null(dotList[["dFileEntryMustExist"]])) { TRUE } else { dotList[["dFileEntryMustExist"]] }
 
 	##Note 0 or more ids should be allowed
@@ -272,7 +272,7 @@ setMethod( "removeCache", "roCache_0.89.0",
 	unlink(f)
 		
 	#And save the dFile
-  saveRDS(object = contents_dFile, file = dFile, ascii = TRUE, compress = FALSE, version=RDSversion)
+  saveRDS(object = contents_dFile, file = dFile, ascii = TRUE, compress = FALSE, version=rdsVersion)
   
   return(TRUE)
 })
@@ -287,13 +287,12 @@ setMethod( "removeCache", "roCache_0.89.0",
 #' @import methods
 #' @export
 setMethod( "synchronizeCache", "roCache_0.89.0", 
-	function( cacheHandle , what = c("cFolder","both","dFile"), ... ) 
+	function( cacheHandle , what = c("cFolder","both","dFile"), dryRun = TRUE, ... ) 
 {
 
-	dFile               = get_dFile(cacheHandle)
-	cFolder             = get_cFolder(cacheHandle)
-	RDSversion          = get_RDSversion(cacheHandle)
-	syncAllowed         = get_syncAllowed(cacheHandle)
+	dFile               = dFile(cacheHandle)
+	cFolder             = cFolder(cacheHandle)
+	rdsVersion          = rdsVersion(cacheHandle)
 
 	what <- match.arg(what)
 
@@ -318,22 +317,22 @@ setMethod( "synchronizeCache", "roCache_0.89.0",
 	if (what %in% c("cFolder","both")) {
 		if (length(delta1)>0 ){
 			#Remove files in cFolder without entry in dFile
-			if (syncAllowed==TRUE) {
+			if (dryRun==FALSE) {
 				removeCache( cacheHandle, ids = delta1, dFileEntryMustExist = FALSE )
 				msg<-c(msg,"Sync: Removed files from cFolder:\n", paste0("\t",delta1,"\n"))
 			}	else {
-				msg<-c(msg,"Found files in cFolder that have no associated dFile entry:\n", paste0("\t",delta1,"\n"))
+				msg<-c(msg,"Sync (dryRun): Found files in cFolder that have no associated dFile entry:\n", paste0("\t",delta1,"\n"))
 			}
 
 		}
 	
 	} else if (what %in%c("dFile","both") ) {
 		if ( length(delta2)>0 ) {
-			if (syncAllowed==TRUE) {
+			if (dryRun==FALSE) {
 				removeCache( cacheHandle, ids = delta2 )
 				msg<-c(msg,"Sync: Removed entries from dFile:\n", paste0("\t",delta2,"\n"))
 			} else {
-				msg<-c(msg,"entries in dFile without associated dile in cFolder:\n", paste0("\t",delta2,"\n"))
+				msg<-c(msg,"Sync (dryRun): Entries in dFile without associated dile in cFolder:\n", paste0("\t",delta2,"\n"))
 			}
 		}
 	} else {
@@ -356,24 +355,22 @@ setMethod( "synchronizeCache", "roCache_0.89.0",
 #' @export
 #' @import methods
 setMethod( "storeCache", "roCache_0.89.0", 
-	function( cacheHandle, ..., id, funcHandle = defaultFuncHandle,  overwrite = FALSE, returnType = c("outputDigest","contents","inputDigests","filename") ) {
+	function( cacheHandle, ..., id, funcHandle = defaultFuncHandle, returnType = c("outputDigest","contents","inputDigests","filename") ) {
 
-	dFile               = get_dFile(cacheHandle)
-	cFolder             = get_cFolder(cacheHandle)
-	RDSversion          = get_RDSversion(cacheHandle)
+	dFile               = dFile(cacheHandle)
+	cFolder             = cFolder(cacheHandle)
+	rdsVersion          = rdsVersion(cacheHandle)
+	overwrite           = overwrite(cacheHandle)
 
 	if (missing(returnType)) returnType = c("outputDigest")
-	if (missing(overwrite))   overwrite = FALSE
 	if (missing(funcHandle)) funcHandle = defaultFuncHandle
 
   returnType<-match.arg(returnType, c("outputDigest","contents","inputDigests","filename"))
   	
 	if (length(id)         !=1 ) stop("Please provide a single value to argument 'id'.")
 	if (length(funcHandle) !=1 ) stop("Please provide a single value to argument 'funcHandle'.")
-	if (length(overwrite)  !=1 ) stop("Please provide a single value to argument 'overwrite'.")
 	
 	if (is.na(id))                stop("'id' cannot be NA.")
-	if (is.na(overwrite))         stop("'overwrite' cannot be NA.")
 	if (!is.function(funcHandle)) stop("'funcHandle' must be a function reference.")
 	
 
@@ -383,8 +380,9 @@ setMethod( "storeCache", "roCache_0.89.0",
   ##if succeeded, remove any previous digests for id
 	curInputDigests <- 
 		tryCatch( 
-			expr = {  funcHandle( getDigests=TRUE, ... ) },
-			error = function(e) {
+			expr = {  
+				eval(expr = funcHandle( getDigests=TRUE, ... ) , envir = parent.frame())
+			}, error = function(e) {
 				error_message <- paste0("While calling the function handle with getDigests=TRUE: ", conditionMessage(e))
 				stop(simpleError(error_message))
 			})
@@ -470,10 +468,10 @@ setMethod( "storeCache", "roCache_0.89.0",
 	)
 
   if (length(prevFile)==0 || cur_tmpFile!=prevFile) { ##I.e. if first run or inputDigest changed
-		objectToStore =	tryCatch(
-			expr = {  funcHandle(getDigests=FALSE, ... ) }, 
-			error = function(e) {
-			
+		objectToStore <- tryCatch(
+			expr = { 
+				eval(expr = funcHandle( getDigests=FALSE, ... ) , envir = parent.frame())
+			}, error = function(e) {
 				error_message <- paste0("While calling the function handle with getDigests=FALSE: ", conditionMessage(e))
 				stop(simpleError(error_message))
 			}
@@ -490,15 +488,15 @@ setMethod( "storeCache", "roCache_0.89.0",
       #Only store if output digest has not changed
       errMessages=paste0("The observed outputDigest (",obsOutputDigest,") does not match the earlier created expected outputDigest (",contents_dFile[["FILEIDS"]][[id]][["outputDigest"]] ,"). The output is written to a temp file for inspection: ", err_tmpFile)
       errMessages = c( errMessages, "Consider setting overwrite=TRUE, to overwrite the current cache.")
-      saveRDS(object = localEnv, file = err_tmpFile, version=RDSversion)
+      saveRDS(object = localEnv, file = err_tmpFile, version=rdsVersion)
       stop(simpleError(errMessages))
     }
     
     ##Set the outputDigest in the digest file
     contents_dFile[["FILEIDS"]][[id]][["outputDigest"]]<-obsOutputDigest
          
-    saveRDS(object = localEnv,       file = cur_tmpFile, version=RDSversion)
-    saveRDS(object = contents_dFile, file = dFile, ascii = TRUE, compress = FALSE, version=RDSversion)
+    saveRDS(object = localEnv,       file = cur_tmpFile, version=rdsVersion)
+    saveRDS(object = contents_dFile, file = dFile, ascii = TRUE, compress = FALSE, version=rdsVersion)
     unlink(prevFile)
   }
 

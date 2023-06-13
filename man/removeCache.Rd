@@ -33,7 +33,7 @@ myFuncHdl<- function( getDigests, arg1, arg2) {
       "arg2" = digest(arg2)
    ))
   }
-  #Perform the intended processing
+  #Perform the intended (heavy) processing
   result = arg1*arg2
   Sys.sleep(4)  ##Artificially sleep to mimic 'long' running function
   return(result) ##And return what should be cached
@@ -46,32 +46,25 @@ cFolder = tempfile()
 #Initialize cache at a non standard location
 cacheHdl = initCache(dFile = dFile, cFolder = cFolder)
 
+#Store some data in cache using the default function handler:
+storeCache(cacheHdl, id = "ID1", object="This is cached")
+
 #Store some data in cache which is generated within the funcHandle defined above. 
-#Store new file with ID1, and return outputDigest (default)
-storeCache(cacheHdl, 
-  id = "ID1", 
-  funcHandle = myFuncHdl, arg1 = 89, arg2=10)
+storeCache(cacheHdl, id = "ID2", funcHandle = myFuncHdl, arg1 = 89, arg2=10)
+
 #Store new file with ID2, and return contents
-storeCache(cacheHdl, 
-  id = "ID2", 
-  funcHandle = myFuncHdl, arg1 = 2, arg2=4,  
-  returnType="contents")
-#Rerun cache file with ID2, without changing input arguments. Because input arguments have not 
+storeCache(cacheHdl, id = "ID3", funcHandle = myFuncHdl, arg1 = 2, arg2=4, returnType="contents")
+#Rerun cache file with ID3, without changing input arguments. Because input arguments have not 
 ## changed, the funcHandle will not be rerun, and thus stored cache is not affected.  
-storeCache(cacheHdl, 
-  id = "ID2", 
-  funcHandle = myFuncHdl, arg1 = 2, arg2=4)
+storeCache(cacheHdl, id = "ID3", funcHandle = myFuncHdl, arg1 = 2, arg2=4)
 \dontrun{
-#Rerun cache file with ID2, but now with a change in input arguments. Because by default 
-## overwrite=FALSE, the required overwrite is rejected. 
-storeCache(cacheHdl, 
-  id = "ID2", 
-  funcHandle = myFuncHdl, arg1 = 20, arg2=4)
+#Rerun cache file with ID3, but now with a change in input arguments. Because by default 
+## the handler does not allow overwriting cache, the storage is rejected. 
+storeCache(cacheHdl, id = "ID3", funcHandle = myFuncHdl, arg1 = 20, arg2=4)
 }
-#Instead set overwrite=TRUE
-storeCache(cacheHdl, 
-  id = "ID2", 
-  funcHandle = myFuncHdl, arg1 = 20, arg2=4, overwrite=TRUE)
+#Instead allow overwriting on the cache handler:
+overwrite(cacheHdl) <- TRUE
+storeCache(cacheHdl, id = "ID3",  funcHandle = myFuncHdl, arg1 = 20, arg2=4)
 
 #List fileIDs currently stored in cache
 listCache(cacheHdl)
@@ -85,7 +78,7 @@ removeCache(cacheHdl, ids="ID1")
 #Synchronize cFolder with dFile. Usually they are already synchronized
 synchronizeCache(cacheHdl, what = "cFolder")
 #However to illustrate synchronization, we can forcefully remove a file in cFolder
-unlink(dir(get_cFolder(cacheHdl), pattern='ID2', full.names=TRUE))
+unlink(dir(cFolder(cacheHdl), pattern='ID2', full.names=TRUE))
 #And show a dry-run
 synchronizeCache(cacheHdl, what = "dFile")
 #Or reinitialize the cache with syncAllowed.
@@ -94,8 +87,8 @@ cacheHdl = initCache(dFile = dFile, cFolder = cFolder, syncAllowed=TRUE)
 synchronizeCache(cacheHdl, what = "dFile")
 
 #Clean up example
-unlink(get_dFile(cacheHdl))
-unlink(get_cFolder(cacheHdl), recursive=TRUE)
+unlink(dFile(cacheHdl))
+unlink(cFolder(cacheHdl), recursive=TRUE)
 
 }
 \seealso{

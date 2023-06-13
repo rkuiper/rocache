@@ -1,83 +1,82 @@
 #############################################################################
-### Some getters
+### Some getters/setters
 ###
 
-#' getter: get_dFile
-#'
-#' A getter to obtain the dFile from the cacheHandle.
-#'
+#' dFile
 #' @param cacheHandle The handle of interest.
 #' @param ... not used
+#' @rdname dFile
 #' @import methods
 setGeneric(
-	name = "get_dFile",
+	name = "dFile",
 	def = function( cacheHandle, ...){
-			standardGeneric("get_dFile")
+			standardGeneric("dFile")
 	})
 	
-#' getter: get_cFolder
-#'
-#' A getter to obtain the cFolder from the cacheHandle.
-#'
+#' cFolder
 #' @param cacheHandle The handle of interest.
 #' @param ... not used
+#' @rdname cFolder
 #' @import methods
 setGeneric(
-	name = "get_cFolder",
+	name = "cFolder",
 	def = function( cacheHandle, ...){
-			standardGeneric("get_cFolder")
+			standardGeneric("cFolder")
 	})
 
-#' getter: get_syncAllowed
-#'
-#' A getter to obtain 'syncAllowed' status from the cacheHandle.
-#'
+#' overwrite
 #' @param cacheHandle The handle of interest.
 #' @param ... not used
+#' @rdname overwrite
 #' @import methods
 setGeneric(
-	name = "get_syncAllowed",
+	name = "overwrite",
 	def = function( cacheHandle, ...){
-			standardGeneric("get_syncAllowed")
-	})
-
-#' getter: get_version
-#'
-#' A getter to obtain the version from the cacheHandle.
-#'
-#' @param cacheHandle The handle of interest.
-#' @param ... not used
-#' @import methods
-setGeneric(
-	name = "get_version",
-	def = function( cacheHandle, ...){
-			standardGeneric("get_version")
+			standardGeneric("overwrite")
 	})
 	
-#' getter: get_prevVersion
-#'
-#' A getter to obtain the prevVersion from the cacheHandle.
-#'
+
 #' @param cacheHandle The handle of interest.
-#' @param ... not used
+#' @param value The value to set
+#' @rdname overwrite
 #' @import methods
 setGeneric(
-	name = "get_prevVersion",
-	def = function( cacheHandle, ...){
-			standardGeneric("get_prevVersion")
+	name = "overwrite<-",
+	def = function( cacheHandle, value){
+			standardGeneric("overwrite<-")
 	})
-		
-#' getter: get_RDSversion
-#'
-#' A getter to obtain the RDSversion from the cacheHandle.
-#'
+
+#' version
 #' @param cacheHandle The handle of interest.
 #' @param ... not used
+#' @rdname version
 #' @import methods
 setGeneric(
-	name = "get_RDSversion",
+	name = "version",
 	def = function( cacheHandle, ...){
-			standardGeneric("get_RDSversion")
+			standardGeneric("version")
+	})
+	
+#' prevVersion
+#' @param cacheHandle The handle of interest.
+#' @param ... not used
+#' @rdname prevVersion
+#' @import methods
+setGeneric(
+	name = "prevVersion",
+	def = function( cacheHandle, ...){
+			standardGeneric("prevVersion")
+	})
+
+#' rdsVersion
+#' @param cacheHandle The handle of interest.
+#' @param ... not used
+#' @rdname rdsVersion
+#' @import methods
+setGeneric(
+	name = "rdsVersion",
+	def = function( cacheHandle, ...){
+			standardGeneric("rdsVersion")
 	})
 	
 	
@@ -116,9 +115,9 @@ setGeneric(
 #' Stores data (as returned by funcHandle) in cache. If the fileID was already 
 #' written previously, then by default, the cache will not be changed. This will be
 #' the case, even if the fileID is not present in cFolder, but only has an dFile
-#' entry. Cache will only be overwritten if setting overwrite = TRUE.  
-#' Then a change in the input parameters, will trigger a rerun of the funcHandle,
-#' and subsequent overwriting of existing cache. 
+#' entry. Cache will only be overwritten if the handler overwrite status is explicity
+#' set to TRUE (see \code{\link{overwrite}}). Then a change in the input parameters, 
+#' will trigger a rerun of the funcHandle, and subsequent overwriting of existing cache. 
 #'
 #' A function handle must be a function with a first argument being 'getDigest' 
 #' receiving either TRUE, or FALSE. If TRUE, the function must return a named 
@@ -131,7 +130,6 @@ setGeneric(
 #' @param cacheHandle The handle of interest.
 #' @param id name tag.
 #' @param funcHandle a reference to a function. See details.
-#' @param overwrite Are changes to existing cache allowed (TRUE/FALSE)?
 #' @param returnType One of 'outputDigest', 'contents', 'inputDigests', 'filename'.
 #' @param ... additional arguments for the funcHandle.
 #'
@@ -148,7 +146,7 @@ setGeneric(
 #'       "arg2" = digest(arg2)
 #'    ))
 #'   }
-#'   #Perform the intended processing
+#'   #Perform the intended (heavy) processing
 #'   result = arg1*arg2
 #'   Sys.sleep(4)  ##Artificially sleep to mimic 'long' running function
 #'   return(result) ##And return what should be cached
@@ -161,32 +159,25 @@ setGeneric(
 #' #Initialize cache at a non standard location
 #' cacheHdl = initCache(dFile = dFile, cFolder = cFolder)
 #'
+#' #Store some data in cache using the default function handler:
+#' storeCache(cacheHdl, id = "ID1", object="This is cached")
+#'
 #' #Store some data in cache which is generated within the funcHandle defined above. 
-#' #Store new file with ID1, and return outputDigest (default)
-#' storeCache(cacheHdl, 
-#'   id = "ID1", 
-#'   funcHandle = myFuncHdl, arg1 = 89, arg2=10)
+#' storeCache(cacheHdl, id = "ID2", funcHandle = myFuncHdl, arg1 = 89, arg2=10)
+#'
 #' #Store new file with ID2, and return contents
-#' storeCache(cacheHdl, 
-#'   id = "ID2", 
-#'   funcHandle = myFuncHdl, arg1 = 2, arg2=4,  
-#'   returnType="contents")
-#' #Rerun cache file with ID2, without changing input arguments. Because input arguments have not 
+#' storeCache(cacheHdl, id = "ID3", funcHandle = myFuncHdl, arg1 = 2, arg2=4, returnType="contents")
+#' #Rerun cache file with ID3, without changing input arguments. Because input arguments have not 
 #' ## changed, the funcHandle will not be rerun, and thus stored cache is not affected.  
-#' storeCache(cacheHdl, 
-#'   id = "ID2", 
-#'   funcHandle = myFuncHdl, arg1 = 2, arg2=4)
+#' storeCache(cacheHdl, id = "ID3", funcHandle = myFuncHdl, arg1 = 2, arg2=4)
 #' \dontrun{
-#' #Rerun cache file with ID2, but now with a change in input arguments. Because by default 
-#' ## overwrite=FALSE, the required overwrite is rejected. 
-#' storeCache(cacheHdl, 
-#'   id = "ID2", 
-#'   funcHandle = myFuncHdl, arg1 = 20, arg2=4)
+#' #Rerun cache file with ID3, but now with a change in input arguments. Because by default 
+#' ## the handler does not allow overwriting cache, the storage is rejected. 
+#' storeCache(cacheHdl, id = "ID3", funcHandle = myFuncHdl, arg1 = 20, arg2=4)
 #' }
-#' #Instead set overwrite=TRUE
-#' storeCache(cacheHdl, 
-#'   id = "ID2", 
-#'   funcHandle = myFuncHdl, arg1 = 20, arg2=4, overwrite=TRUE)
+#' #Instead allow overwriting on the cache handler:
+#' overwrite(cacheHdl) <- TRUE
+#' storeCache(cacheHdl, id = "ID3",  funcHandle = myFuncHdl, arg1 = 20, arg2=4)
 #'
 #' #List fileIDs currently stored in cache
 #' listCache(cacheHdl)
@@ -200,7 +191,7 @@ setGeneric(
 #' #Synchronize cFolder with dFile. Usually they are already synchronized
 #' synchronizeCache(cacheHdl, what = "cFolder")
 #' #However to illustrate synchronization, we can forcefully remove a file in cFolder
-#' unlink(dir(get_cFolder(cacheHdl), pattern='ID2', full.names=TRUE))
+#' unlink(dir(cFolder(cacheHdl), pattern='ID2', full.names=TRUE))
 #' #And show a dry-run
 #' synchronizeCache(cacheHdl, what = "dFile")
 #' #Or reinitialize the cache with syncAllowed.
@@ -209,13 +200,13 @@ setGeneric(
 #' synchronizeCache(cacheHdl, what = "dFile")
 #' 
 #' #Clean up example
-#' unlink(get_dFile(cacheHdl))
-#' unlink(get_cFolder(cacheHdl), recursive=TRUE)
+#' unlink(dFile(cacheHdl))
+#' unlink(cFolder(cacheHdl), recursive=TRUE)
 #'
 #' @import methods
 setGeneric(
 	name = "storeCache",
-	def = function(cacheHandle, ..., id, funcHandle, overwrite, returnType){
+	def = function(cacheHandle, ..., id, funcHandle, returnType){
 		validObject(cacheHandle)
 		standardGeneric("storeCache")
 	})
@@ -247,11 +238,11 @@ setGeneric(
 #' For what = 'cFolder' (default), any file without an associated entry in dFile will be removed
 #' For what = 'dFile', any entry without an associated file in cFolder will be removed
 #' For what = 'both', both cFolder and dFile will be synchronized. Note that if 
-#' syncAllowed=FALSE during initialization of the cache, only a 'dry-run' will be
-#' performed, without actually removing anything.  
+#' dryRun=TRUE, only a 'dry-run' will be performed, without actually removing anything.
 #' 
 #' @param cacheHandle The handle of interest.
 #' @param what one of 'cFolder','both','dFile'.
+#' @param dryRun Perform a dry run (default:TRUE)
 #' @param ... not used.
 #'
 #' @inherit storeCache return examples seealso

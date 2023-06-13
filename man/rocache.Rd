@@ -18,7 +18,7 @@ Key Features:
 Whether you are working with computationally intensive tasks, complex simulations, or large datasets, 'rocache' empowers you to optimize your code and streamline your analyses by intelligently managing cached results.
 \subsection{Exported function}{
 
-defaultFuncHandle, digestOfFunc, get_RDSversion, get_cFolder, get_dFile, get_prevVersion, get_syncAllowed, get_version, initCache, listCache, packageVersion_to_dFileVersion, pkgname, readCache, removeCache, storeCache, synchronizeCache
+cFolder, dFile, defaultFuncHandle, digestOfFunc, initCache, listCache, overwrite, overwrite<-, packageVersion_to_dFileVersion, pkgname, prevVersion, rdsVersion, readCache, removeCache, storeCache, synchronizeCache, version
 }
 }
 \keyword{R}

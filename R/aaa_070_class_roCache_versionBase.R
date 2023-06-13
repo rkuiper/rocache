@@ -3,26 +3,26 @@ setClass("roCache_versionBase",
 	slots = list(
 		dFile           = "character",
 		cFolder         = "character",
-		syncAllowed     = "logical",
+		overwrite       = "logical",
 	
 		version         = "character",
 		previousVersion = "character",
-		RDSversion      = "integer"
+		rdsVersion      = "integer"
 	)
 )
 
 
 #Define the initialize method for the class
 #' @import methods
-setMethod("initialize", "roCache_versionBase", function(.Object, ..., dFile, cFolder, syncAllowed, version, previousVersion, RDSversion) {
+setMethod("initialize", "roCache_versionBase", function(.Object, ..., dFile, cFolder, overwrite, version, previousVersion, rdsVersion) {
   if (options("cache.debug")[[1]]==TRUE) 	print("Start init base")
   
 	if ( !missing(dFile) )           .Object@dFile           = dFile
 	if ( !missing(cFolder) )         .Object@cFolder         = cFolder
-	if ( !missing(syncAllowed) )     .Object@syncAllowed     = syncAllowed
+	if ( !missing(overwrite) )       .Object@overwrite       = overwrite
 	if ( !missing(version) )         .Object@version         = version
 	if ( !missing(previousVersion))  .Object@previousVersion = previousVersion
- 	if ( !missing(RDSversion))       .Object@RDSversion      = RDSversion
+ 	if ( !missing(rdsVersion))       .Object@rdsVersion      = rdsVersion
 
 	dFile_existsAsFolder   = dir.exists(dFile)
 	cFolder_existsAsFolder = dir.exists(cFolder)
@@ -48,12 +48,12 @@ setValidity("roCache_versionBase",
 		
 		errs<-vector()
 		
-		dFile               = get_dFile(object)
-		cFolder             = get_cFolder(object)
-		syncAllowed         = get_syncAllowed(object)
-		version						  = get_version(object)
-		prevVersion         = get_prevVersion(object)
-		RDSversion          = get_RDSversion(object)
+		dFile               = dFile(object)
+		cFolder             = cFolder(object)
+		overwrite           = overwrite(object)
+		version						  = version(object)
+		prevVersion         = prevVersion(object)
+		rdsVersion          = rdsVersion(object)
 
 		
 
@@ -65,9 +65,9 @@ setValidity("roCache_versionBase",
 
 		if (length(dFile) != 1 )       errs<-c(errs, "dFile must point to exactly one file.")
 		if (length(cFolder) != 1 )     errs<-c(errs, "cFolder must point to exactly one folder.")
-		if (length(syncAllowed) != 1 ) errs<-c(errs, "syncAllowed must contain exactly one logical value.")
+		if (length(overwrite) != 1 )   errs<-c(errs, "overwrite must contain exactly one logical value.")
 		if (length(version) != 1 )     errs<-c(errs, "version must contain exacly one version.")
-		if (length(RDSversion) != 1 )  errs<-c(errs, "RDSversion must contain exactly one version.")
+		if (length(rdsVersion) != 1 )  errs<-c(errs, "rdsVersion must contain exactly one version.")
 		if (length(prevVersion) !=1 )  errs<-c(errs, "prevVersion must contain exactly one version.")
 
 
@@ -76,12 +76,12 @@ setValidity("roCache_versionBase",
 			return(paste0(errs,collapse="\n"))
 		}
 
-		if (is.na(dFile))       errs<-c(errs, "dFile cannot by NA.")
-		if (is.na(cFolder))     errs<-c(errs, "cFolder cannot by NA.")
-		if (is.na(syncAllowed)) errs<-c(errs, "syncAllowed cannot by NA.")
-		if (is.na(version))     errs<-c(errs, "version cannot by NA.")
-		if (is.na(RDSversion))  errs<-c(errs, "RDSversion cannot by NA.")
-		if (is.na(prevVersion)) errs<-c(errs, "prevVersion cannot by NA.")
+		if (is.na(dFile))       errs<-c(errs, "dFile cannot be NA.")
+		if (is.na(cFolder))     errs<-c(errs, "cFolder cannot be NA.")
+		if (is.na(overwrite))   errs<-c(errs, "overwrite cannot be NA.")
+		if (is.na(version))     errs<-c(errs, "version cannot be NA.")
+		if (is.na(rdsVersion))  errs<-c(errs, "rdsVersion cannot be NA.")
+		if (is.na(prevVersion)) errs<-c(errs, "prevVersion cannot be NA.")
 
 		if (length(errs)>0) {
 			if (options("cache.debug")[[1]]==TRUE) 	print("End validation base")
@@ -121,60 +121,63 @@ setValidity("roCache_versionBase",
 #' @import methods
 setMethod("show", "roCache_versionBase", function(object){
 	cat ("Cache Handle:\n")
-	cat (paste0("\tdFile       : ", get_dFile(object),"\n"))
-	cat (paste0("\tcFolder     : ", get_cFolder(object),"\n"))
+	cat (paste0("\tdFile       : ", dFile(object),"\n"))
+	cat (paste0("\tcFolder     : ", cFolder(object),"\n"))
 	listedIDs<-listCache(object)
 	sizeInBytes<-lapply(listedIDs, function(id){
 			file.size(readCache(object, id=id, returnType="filename"))
 		}) |> unlist() |> sum()
 	cat (paste0("\tn objects   : ",length(listedIDs)," (", .format_bytes(sizeInBytes),")\n"))
-	cat (paste0("\tsyncAllowed : ", get_syncAllowed(object),"\n"))
+	cat (paste0("\toverwrite : ", overwrite(object),"\n"))
 })
 
-#' @rdname get_dFile
-#' @aliases get_dFile.roCache_versionBase
+#' @rdname dFile
 #' @import methods
 #' @export
-setMethod("get_dFile", "roCache_versionBase", function(cacheHandle,...){
+setMethod("dFile", "roCache_versionBase", function(cacheHandle,...){
 	return(cacheHandle@dFile)
 })
 
-#' @rdname get_cFolder
-#' @aliases get_cFolder.roCache_versionBase
+#' @rdname cFolder
 #' @import methods
 #' @export
-setMethod("get_cFolder", "roCache_versionBase", function(cacheHandle,...){
+setMethod("cFolder", "roCache_versionBase", function(cacheHandle,...){
 	return(cacheHandle@cFolder)
 })
 
-#' @rdname get_syncAllowed
-#' @aliases get_syncAllowed.roCache_versionBase
+#' @rdname overwrite
 #' @import methods
 #' @export
-setMethod("get_syncAllowed", "roCache_versionBase", function(cacheHandle,...){
-	return(cacheHandle@syncAllowed)
+setMethod("overwrite", "roCache_versionBase", function(cacheHandle,...){
+	return(cacheHandle@overwrite)
 })
 
-#' @rdname get_version
-#' @aliases get_version.roCache_versionBase
+#' @rdname overwrite
 #' @import methods
 #' @export
-setMethod("get_version", "roCache_versionBase", function(cacheHandle,...){
+setReplaceMethod("overwrite", c("roCache_versionBase","logical"), function(cacheHandle, value){
+	cacheHandle@overwrite<-value
+	cacheHandle
+})
+
+	
+#' @rdname version
+#' @import methods
+#' @export
+setMethod("version", "roCache_versionBase", function(cacheHandle,...){
 	return(package_version(cacheHandle@version))
 })
 
-#' @rdname get_prevVersion
-#' @aliases get_prevVersion.roCache_versionBase
+#' @rdname prevVersion
 #' @import methods
 #' @export
-setMethod("get_prevVersion", "roCache_versionBase", function(cacheHandle,...){
+setMethod("prevVersion", "roCache_versionBase", function(cacheHandle,...){
 	return(package_version(cacheHandle@previousVersion))
 })
 	
-#' @rdname get_RDSversion
-#' @aliases get_RDSversion.roCache_versionBase
+#' @rdname rdsVersion
 #' @import methods
 #' @export
-setMethod("get_RDSversion", "roCache_versionBase", function(cacheHandle,...){
-	return(cacheHandle@RDSversion)
+setMethod("rdsVersion", "roCache_versionBase", function(cacheHandle,...){
+	return(cacheHandle@rdsVersion)
 })
