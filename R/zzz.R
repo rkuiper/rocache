@@ -16,8 +16,9 @@
 
 
 .format_bytes <- function(size_in_bytes) {
+	if (size_in_bytes<0) stop(simpleError("Argument size_in_bytes must be >=0"))
   units <- c("B", "KB", "MB", "GB", "TB")
-  unit_index <- floor(log(size_in_bytes, base = 1024))
+	unit_index <- floor(log(size_in_bytes+1, base = 1024))
   size_in_unit <- size_in_bytes / (1024^unit_index)
   paste0(formatC(size_in_unit, format = "f", digits = 1), " ", units[unit_index + 1])
 }

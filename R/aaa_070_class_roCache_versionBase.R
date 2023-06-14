@@ -123,10 +123,16 @@ setMethod("show", "roCache_versionBase", function(object){
 	cat ("Cache Handle:\n")
 	cat (paste0("\tdFile       : ", dFile(object),"\n"))
 	cat (paste0("\tcFolder     : ", cFolder(object),"\n"))
+
 	listedIDs<-listCache(object)
-	sizeInBytes<-lapply(listedIDs, function(id){
-			file.size(readCache(object, id=id, returnType="filename"))
-		}) |> unlist() |> sum()
+	sizeInBytes<-0
+
+	if ( length(listedIDs)>0) {
+		sizeInBytes<-lapply(listedIDs, function(id){
+				file.size(readCache(object, id=id, returnType="filename"))
+			}) |> unlist() |> sum()
+	}
+
 	cat (paste0("\tn objects   : ",length(listedIDs)," (", .format_bytes(sizeInBytes),")\n"))
 	cat (paste0("\toverwrite : ", overwrite(object),"\n"))
 })
